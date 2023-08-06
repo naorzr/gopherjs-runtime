@@ -17,12 +17,14 @@ import (
 	"flag"
 	"fmt"
 	gobuild "go/build"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gopherjs/gopherjs/build"
 	"github.com/gopherjs/gopherjs/compiler"
+	"github.com/gopherjs/gopherjs/compiler/gopherjspkg"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,15 +32,29 @@ type logLevelFlag struct{ log.Level }
 
 func (l *logLevelFlag) Set(raw string) error { return l.UnmarshalText([]byte(raw)) }
 
-var (
-	logLevel logLevelFlag = logLevelFlag{Level: log.ErrorLevel}
-)
+var logLevel logLevelFlag = logLevelFlag{Level: log.ErrorLevel}
 
 func init() {
 	flag.Var(&logLevel, "log_level", "Default logging level.")
 }
 
+// This is a hack to tell the compiler where gopherjs internal package sources
+// are located. Normally the compiler would do it in the main package via a
+// go:embed directive, but we can't import that here.
+func initFS() error {
+	pkg, err := gobuild.Import("github.com/gopherjs/gopherjs", "", gobuild.FindOnly)
+	if err != nil {
+		return fmt.Errorf("failed to find gopherjs package location: %w", err)
+	}
+	gopherjspkg.RegisterFS(http.Dir(pkg.Dir))
+	return nil
+}
+
 func run() error {
+	if err := initFS(); err != nil {
+		return fmt.Errorf("failed to initialize gopherjs package file system: %w", err)
+	}
+
 	s, err := build.NewSession(&build.Options{
 		Verbose: true,
 		Minify:  true,
@@ -78,7 +94,7 @@ func run() error {
 
 func writeArchive(target string, archive *compiler.Archive) error {
 	path := filepath.Join(target, filepath.FromSlash(archive.ImportPath)+".a.js")
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("failed to create precompiled package directory %q: %w", filepath.Dir(path), err)
 	}
 	f, err := os.Create(path)

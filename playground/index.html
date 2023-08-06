@@ -3,7 +3,7 @@
 
 <head>
     <title>Go Playground</title>
-    <script src="main.js"></script>
+    <script src="main.js" defer></script>
     <style>
         #code {
             width: 100%;
@@ -24,27 +24,19 @@
 package main
 
 import (
+    "fmt"
     "syscall/js"
 )
 
 func main() {
-    js.Global().Call("alert", "Hello, JavaScript")
+    // js.Global().Call("alert", "Hello, JavaScript")
     js.Global().Get("console").Call("log", "Hello, JS console")
+    fmt.Println("test")
 }
         </textarea>
-
-    <button onclick="run()">Run</button>
+    
+    <button id="run">Run</button>
     <pre id="output"></pre>
-
-    <script>
-        function run() {
-            var code = document.getElementById('code').value;
-            runCodeAsync(code, (output) => {
-                console.info('outpput', output);
-                document.getElementById('output').textContent = JSON.stringify(output, null, 2);
-            });
-        }
-    </script>
 </body>
 
 </html>
