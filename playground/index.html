@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Go Playground</title>
     <script src="main.js"></script>
@@ -8,16 +9,18 @@
             width: 100%;
             height: 300px;
         }
+
         #output {
             width: 100%;
             height: 300px;
         }
     </style>
 </head>
+
 <body>
     <h1>Go Playground</h1>
 
-<textarea id="code">
+    <textarea id="code">
 package main
 
 import (
@@ -29,16 +32,19 @@ func main() {
     js.Global().Get("console").Call("log", "Hello, JS console")
 }
         </textarea>
-    
+
     <button onclick="run()">Run</button>
     <pre id="output"></pre>
 
     <script>
         function run() {
             var code = document.getElementById('code').value;
-            var output = runCodeAsync(code);
-            document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+            runCodeAsync(code, (output) => {
+                console.info('outpput', output);
+                document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+            });
         }
     </script>
 </body>
+
 </html>

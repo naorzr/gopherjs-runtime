@@ -22,10 +22,8 @@ type Line map[string]string
 
 var output []Line
 var fileSet *token.FileSet
-var pkgsToLoad map[string]struct{}
 var importContext *compiler.ImportContext
 var packages map[string]*compiler.Archive
-var pkgsReceived int
 
 func main() {
 	packages = make(map[string]*compiler.Archive)
@@ -70,27 +68,22 @@ func main() {
 		},
 	}
 	fileSet = token.NewFileSet()
-	pkgsReceived = 0
-
 	setupEnvironment()
 	js.Global.Set("runCode", js.MakeFunc(runCode))
 	js.Global.Set("runCodeAsync", js.MakeFunc(runCodeAsync))
-
 }
 
 func runCodeAsync(this *js.Object, arguments []*js.Object) interface{} {
-	resultChan := make(chan interface{})
+	callback := arguments[1] // Assuming you pass a JS callback as the second argument
 
 	go func() {
-		// Original runCode content
-		result := runCode(this, arguments)
+		result := runCode(this, arguments[:1]) // You can adjust the arguments slice as needed
 
-		resultChan <- result
-		close(resultChan)
+		// Once we have the result, we call the JS callback with the result
+		callback.Invoke(result)
 	}()
 
-	// Block until the goroutine sends the result, then return it
-	return <-resultChan
+	return nil
 }
 
 func runCode(this *js.Object, arguments []*js.Object) interface{} {
@@ -111,8 +104,10 @@ func runCode(this *js.Object, arguments []*js.Object) interface{} {
 			for _, entry := range list {
 				outputErr = append(outputErr, Line{"type": "err", "content": entry.Error()})
 			}
+			js.Global.Get("console").Call("error", "error parsing package: main")
 			return outputErr
 		}
+		js.Global.Get("console").Call("error", "error parsing package2: main")
 		return err.Error()
 	}
 
@@ -123,8 +118,11 @@ func runCode(this *js.Object, arguments []*js.Object) interface{} {
 			for _, entry := range list {
 				outputErr = append(outputErr, Line{"type": "err", "content": entry.Error()})
 			}
+			js.Global.Get("console").Call("error", "error compiling package: "+mainPkg.Name)
+
 			return outputErr
 		}
+		js.Global.Get("console").Call("error", "error compiling package2: "+mainPkg.Name)
 		return err.Error()
 	}
 
