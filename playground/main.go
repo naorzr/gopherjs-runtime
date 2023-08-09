@@ -24,7 +24,6 @@ func consoleErrorf(format string, args ...interface{}) {
 func newImportContext() *compiler.ImportContext {
 	archives := make(map[string]*compiler.Archive)
 	packages := make(map[string]*types.Package)
-	baseURL := js.Global.Get("location").Get("href").String()
 	importContext := &compiler.ImportContext{
 		Packages: packages,
 		Import: func(path string) (*compiler.Archive, error) {
@@ -37,7 +36,7 @@ func newImportContext() *compiler.ImportContext {
 
 			// Precompiled archives are located at "pkg/<import path>.a.js" relative
 			// URL, convert that to the absolute URL http.Get() needs.
-			url := js.Global.Get("URL").New("pkg/"+path+".a.js", baseURL).Call("toString").String()
+			url := "https://cdn.jsdelivr.net/gh/naorzr/gopherjs-runtime@master/playground/pkg/" + path + ".a.js"
 			resp, err := http.Get(url)
 			if err != nil {
 				return nil, err
