@@ -32,7 +32,7 @@ func newImportContext() *compiler.ImportContext {
 
 			// Precompiled archives are located at "pkg/<import path>.a.js" relative
 			// URL, convert that to the absolute URL http.Get() needs.
-			url := "https://cdn.jsdelivr.net/gh/naorzr/gopherjs-runtime@1.18.0-beta3/playground/pkg/" + path + ".a.js"
+			url := "https://cdn.jsdelivr.net/gh/naorzr/gopherjs-runtime@1.18.0-beta3/pkg/" + path + ".a.js"
 			resp, err := http.Get(url)
 			if err != nil {
 				return nil, err
