@@ -15,10 +15,6 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
-func consoleErrorf(format string, args ...interface{}) {
-	js.Global.Get("console").Call("error", fmt.Sprintf(format, args...))
-}
-
 // newImportContext creates an ImportContext instance, which downloads
 // precompiled package archives.
 func newImportContext() *compiler.ImportContext {
@@ -74,24 +70,26 @@ type Playground struct {
 //
 // Returns generated JS code that can be evaluated, or an error if compilation
 // fails.
-func (p *Playground) Compile(code string) (string, error) {
-	fileSet := token.NewFileSet()
+func (p *Playground) Compile(code string, callback func(string, error)) {
+	go func() {
+		fileSet := token.NewFileSet()
 
-	file, err := parser.ParseFile(fileSet, "prog.go", []byte(code), parser.ParseComments)
-	if err != nil {
-		return "", err
-	}
+		file, err := parser.ParseFile(fileSet, "prog.go", []byte(code), parser.ParseComments)
+		if err != nil {
+			callback("", err)
+		}
 
-	mainPkg, err := compiler.Compile("main", []*ast.File{file}, fileSet, p.importContext, false)
-	if err != nil {
-		return "", err
-	}
+		mainPkg, err := compiler.Compile("main", []*ast.File{file}, fileSet, p.importContext, false)
+		if err != nil {
+			callback("", err)
+		}
 
-	allPkgs, _ := compiler.ImportDependencies(mainPkg, p.importContext.Import)
+		allPkgs, _ := compiler.ImportDependencies(mainPkg, p.importContext.Import)
 
-	jsCode := bytes.NewBuffer(nil)
-	compiler.WriteProgramCode(allPkgs, &compiler.SourceMapFilter{Writer: jsCode}, runtime.Version())
-	return jsCode.String(), nil
+		jsCode := bytes.NewBuffer(nil)
+		compiler.WriteProgramCode(allPkgs, &compiler.SourceMapFilter{Writer: jsCode}, runtime.Version())
+		callback(jsCode.String(), nil)
+	}()
 }
 
 // Run the compiled JS code.
@@ -119,41 +117,12 @@ func (p *Playground) Run(compiled string) (returnedError error) {
 }
 
 func main() {
-	// Create a playground object. Its lifetime will be equal to the lifetime of
-	// the event handler on the button, which will allow it to cache precompiled
-	// packages between the runs.
+	// Create a playground object. It will exist for the lifetime of the
+	// application, allowing it to cache precompiled packages between runs.
+	// This improves performance by avoiding unnecessary recompilation.
 	p := Playground{
 		importContext: newImportContext(),
 	}
 
-	// Obtain references to the relevant DOM nodes.
-	codeEl := js.Global.Get("document").Call("getElementById", "code")
-	if codeEl == nil {
-		panic("Can't find code input field.")
-	}
-	runEl := js.Global.Get("document").Call("getElementById", "run")
-	if runEl == nil {
-		panic("Can't find 'Run' button.")
-	}
-
-	// Install a click handler to the button. Instead of polluting global
-	// namespace, we just register an anonymous function.
-	runEl.Call("addEventListener", "click", func(event *js.Object) {
-		// Because compilation may involve blocking calls (e.g. network requests),
-		// it must be done in a goroutine to avoid blocking event loop. We kick off
-		// the goroutine and the event handler completed immediately.
-		go func() {
-			code := codeEl.Get("value").String()
-			println("Compiling the code:\n", code)
-			compiled, err := p.Compile(code)
-			if err != nil {
-				consoleErrorf("Failed to compile the code:\n%s", err)
-			}
-			err = p.Run(compiled)
-			if err != nil {
-				consoleErrorf("Failed to execute the code:\n%s", err)
-			}
-			println("Execution completed without errors.")
-		}()
-	})
+	js.Global.Set("__GOPHERJS__", js.MakeWrapper(&p))
 }
