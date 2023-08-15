@@ -70,7 +70,7 @@ the `main.go` file describes the process of using the compiler and exposing glob
 
 ## Development
 
-To update the entire playground environment, just run `go generate github.com/gopherjs/gopherjs.github.io/playground`. It will install your local version of GopherJS compiler, build the playground, make a temporary copy of Go to /tmp/gopherjsplayground_goroot, rebuild and copy the standard library into the `pkg` directory.
+To update the entire playground environment, just run `https://github.com/naorzr/gopherjs-runtime`. It will install your local version of GopherJS compiler, build the playground, make a temporary copy of Go to /tmp/gopherjsplayground_goroot, rebuild and copy the standard library into the `pkg` directory.
 
 Working on the playground application itself is made easier by using the `gopherjs serve` command to rebuild and serve the sample playground every time you refresh the browser.
 
