@@ -78,7 +78,7 @@ Working on the playground application itself is made easier by using the `gopher
 gopherjs serve
 ```
 
-Then open <http://localhost:8080/github.com/gopherjs/gopherjs.github.io/playground>.
+Then open <http://localhost:8080/>.
 
 ## Upgrading GopherJS release
 
