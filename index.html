@@ -19,24 +19,25 @@
 
 <body>
     <h1>Go Playground</h1>
-
+    <p>__GOHPERJS__ should be exposed as a global, open the console and try running the following code</p>
     <textarea id="code">
-package main
-
-import (
-    "fmt"
-    "syscall/js"
-)
-
-func main() {
-    // js.Global().Call("alert", "Hello, JavaScript")
-    js.Global().Get("console").Call("log", "Hello, JS console")
-    fmt.Println("test")
-}
+        __GOPHERJS__.Compile(`
+        package main
+        
+        import (
+            "fmt"
+            "syscall/js"
+        )
+        
+        func main() {
+            // js.Global().Call("alert", "Hello, JavaScript")
+            js.Global().Get("console").Call("log", "Hello, JS console")
+            fmt.Println("test")
+        }
+        
+                `, eval
+        )
         </textarea>
-    
-    <button id="run">Run</button>
-    <pre id="output"></pre>
 </body>
 
 </html>
