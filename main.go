@@ -70,25 +70,25 @@ type Playground struct {
 //
 // Returns generated JS code that can be evaluated, or an error if compilation
 // fails.
-func (p *Playground) Compile(code string, callback func(string, error)) {
+func (p *Playground) Compile(code string, callback func(error, string)) {
 	go func() {
 		fileSet := token.NewFileSet()
 
 		file, err := parser.ParseFile(fileSet, "prog.go", []byte(code), parser.ParseComments)
 		if err != nil {
-			callback("", err)
+			callback(err, "")
 		}
 
 		mainPkg, err := compiler.Compile("main", []*ast.File{file}, fileSet, p.importContext, false)
 		if err != nil {
-			callback("", err)
+			callback(err, "")
 		}
 
 		allPkgs, _ := compiler.ImportDependencies(mainPkg, p.importContext.Import)
 
 		jsCode := bytes.NewBuffer(nil)
 		compiler.WriteProgramCode(allPkgs, &compiler.SourceMapFilter{Writer: jsCode}, runtime.Version())
-		callback(jsCode.String(), nil)
+		callback(nil, jsCode.String())
 	}()
 }
 
